@@ -47,8 +47,8 @@ namespace Editor.Objects
 
 		public delegate nint BindTextureDelegate(Texture2D texture);
 		public delegate Texture2D GetTextureDelegate(nint id);
-		public delegate bool UnbindTextureDelegate(nint id);
-		public delegate ref Dictionary<nint, Texture2D> GetTextureDictionaryForRawUseDelegate();
+		public delegate void UnbindTextureDelegate(nint id);
+		public delegate Dictionary<nint, Texture2D> GetTextureDictionaryForRawUseDelegate();
 		public delegate float GetCameraZoomDelegate();
 		public delegate bool IsHitboxModeActiveDelegate();
 
