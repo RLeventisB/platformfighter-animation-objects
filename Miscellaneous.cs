@@ -67,6 +67,24 @@ namespace Editor.Objects
 	}
 	public static class MiscellaneousFunctions
 	{
+		public static bool IsInsideRectangle(Vector2 position, Vector2 size, float rotation, Vector2 point)
+		{
+			// Translate point to local coordinates of the rectangle
+			double localX = point.X - position.X;
+			double localY = point.Y - position.Y;
+
+			// Rotate point around the rectangle center by the negative of the rectangle angle
+			(double sinAngle, double cosAngle) = Math.SinCos(-rotation);
+
+			double rotatedX = localX * cosAngle - localY * sinAngle;
+			double rotatedY = localX * sinAngle + localY * cosAngle;
+
+			// Check if the rotated point is inside the unrotated rectangle
+			double halfWidth = size.X / 2;
+			double halfHeight = size.Y / 2;
+
+			return Math.Abs(rotatedX) <= halfWidth && Math.Abs(rotatedY) <= halfHeight;
+		}
 		public static unsafe object CloneWithoutReferences(this object obj)
 		{
 			Type underlyingType = obj.GetType();
