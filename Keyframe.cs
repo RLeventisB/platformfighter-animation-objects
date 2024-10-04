@@ -66,7 +66,7 @@ namespace Editor.Objects
 
 		public override int GetHashCode() => Value.GetType().GetHashCode() ^ Frame;
 	}
-	public class KeyframeLink : ICollection<Keyframe>
+	public class KeyframeLink
 	{
 		[JsonPropertyName("keyframes")]
 		private readonly List<Keyframe> _keyframes;
@@ -150,8 +150,6 @@ namespace Editor.Objects
 		public void ChangedFrame(Keyframe keyframe)
 		{
 		}
-
-		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 	}
 	public enum InterpolationType : byte
 	{
