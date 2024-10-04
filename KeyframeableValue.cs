@@ -169,7 +169,7 @@ namespace Editor.Objects
 		public Keyframe FirstKeyframe => HasKeyframes() ? keyframes[0] : null;
 		public Keyframe LastKeyframe => HasKeyframes() ? keyframes[KeyframeCount - 1].Frame : null;
 
-		public int Add(Keyframe value)
+		public int Add(Keyframe value, bool invalidate = true)
 		{
 			int index = FindIndexByKeyframe(value);
 
@@ -180,7 +180,8 @@ namespace Editor.Objects
 				keyframes.Insert(~index, value);
 			}
 
-			InvalidateCachedValue();
+			if(invalidate)
+				InvalidateCachedValue();
 
 			return index;
 		}

@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text.Json.Serialization;
 
 namespace Editor.Objects
@@ -8,9 +7,10 @@ namespace Editor.Objects
 	public class Keyframe : IComparable<Keyframe>
 	{
 		public KeyframeableValue ContainingValue;
-		private int _frame;
-		private object _value;
-		[JsonIgnore]
+		[JsonInclude]
+		private object value;
+		[JsonPropertyName("containing_link")]
+		[JsonInclude]
 		private KeyframeLink _containingLink;
 
 		[JsonConstructor]
@@ -27,25 +27,18 @@ namespace Editor.Objects
 			Value = data;
 		}
 
-		public int Frame
-		{
-			get => _frame;
-			set
-			{
-				_frame = value;
-				ContainingLink?.ChangedFrame(this);
-			}
-		}
+		public int Frame { get; set; }
+		[JsonIgnore]
 		public object Value
 		{
-			get => _value;
+			get => value;
 			set
 			{
-				_value = value;
+				this.value = value;
 				ContainingValue?.InvalidateCachedValue();
 			}
 		}
-		[JsonInclude]
+		[JsonIgnore]
 		public KeyframeLink ContainingLink
 		{
 			get
@@ -69,7 +62,9 @@ namespace Editor.Objects
 	public class KeyframeLink
 	{
 		[JsonPropertyName("keyframes")]
-		private readonly List<Keyframe> _keyframes;
+		[JsonInclude]
+		private List<Keyframe> _keyframes;
+		[JsonIgnore]
 		public IReadOnlyList<Keyframe> Keyframes => _keyframes;
 		public KeyframeableValue ContainingValue;
 		private InterpolationType _interpolationType;
@@ -121,10 +116,10 @@ namespace Editor.Objects
 
 		public void Clear()
 		{
-			throw new NotSupportedException();
+			_keyframes.Clear();
 		}
 
-		public bool Contains(Keyframe item) => throw new NotSupportedException();
+		public bool Contains(Keyframe item) => _keyframes.Contains(item);
 
 		public void CopyTo(Keyframe[] array, int arrayIndex)
 		{
