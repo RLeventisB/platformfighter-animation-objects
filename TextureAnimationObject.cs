@@ -14,10 +14,10 @@ namespace Editor.Objects
 
 			Scale = new Vector2KeyframeValue(this, Vector2.One, PropertyNames.ScaleProperty, false);
 			FrameIndex = new IntKeyframeValue(this, 0, PropertyNames.FrameIndexProperty, false);
-			Rotation = new FloatKeyframeValue(this, 0, PropertyNames.RotationProperty, false);
+			Rotation = new FloatKeyframeValue(this, 0f, PropertyNames.RotationProperty, false);
 			Position = new Vector2KeyframeValue(this, Vector2.Zero, PropertyNames.PositionProperty, false);
-			Transparency = new FloatKeyframeValue(this, 1, PropertyNames.TransparencyProperty, false);
-			ZIndex = new FloatKeyframeValue(this, 0, PropertyNames.ZIndexProperty, false);
+			Transparency = new FloatKeyframeValue(this, 1f, PropertyNames.TransparencyProperty, false);
+			ZIndex = new FloatKeyframeValue(this, 0f, PropertyNames.ZIndexProperty, false);
 		}
 
 		public TextureAnimationObject(string name, string textureName)
@@ -27,10 +27,10 @@ namespace Editor.Objects
 
 			Scale = new Vector2KeyframeValue(this, Vector2.One, PropertyNames.ScaleProperty);
 			FrameIndex = new IntKeyframeValue(this, 0, PropertyNames.FrameIndexProperty);
-			Rotation = new FloatKeyframeValue(this, 0, PropertyNames.RotationProperty);
+			Rotation = new FloatKeyframeValue(this, 0f, PropertyNames.RotationProperty);
 			Position = new Vector2KeyframeValue(this, Vector2.Zero, PropertyNames.PositionProperty);
-			Transparency = new FloatKeyframeValue(this, 1, PropertyNames.TransparencyProperty);
-			ZIndex = new FloatKeyframeValue(this, 0, PropertyNames.ZIndexProperty);
+			Transparency = new FloatKeyframeValue(this, 1f, PropertyNames.TransparencyProperty);
+			ZIndex = new FloatKeyframeValue(this, 0f, PropertyNames.ZIndexProperty);
 		}
 
 		public string TextureName { get; set; }
