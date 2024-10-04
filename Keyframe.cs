@@ -66,20 +66,12 @@ namespace Editor.Objects
 
 		public override int GetHashCode() => Value.GetType().GetHashCode() ^ Frame;
 	}
-	public class KeyframeLinkOld : KeyframeLink, ICollection<Keyframe>
+	public class KeyframeLink : ICollection<Keyframe>
 	{
-		public static KeyframeLinkOld FromKeyframeLink(KeyframeLink link) => (KeyframeLinkOld)link;
-
-		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-	}
-	public class KeyframeLink
-	{
-		[JsonInclude]
-		[JsonPropertyName("values")]
+		[JsonPropertyName("keyframes")]
 		private readonly List<Keyframe> _keyframes;
 		public IReadOnlyList<Keyframe> Keyframes => _keyframes;
 		public KeyframeableValue ContainingValue;
-		[JsonInclude]
 		private InterpolationType _interpolationType;
 		public bool UseRelativeProgressCalculation = true;
 
@@ -158,6 +150,8 @@ namespace Editor.Objects
 		public void ChangedFrame(Keyframe keyframe)
 		{
 		}
+
+		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 	}
 	public enum InterpolationType : byte
 	{

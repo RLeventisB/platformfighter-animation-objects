@@ -1,7 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 
-using System.Runtime.CompilerServices;
-
 namespace Editor.Objects
 {
 	public static class ExternalActions
@@ -27,8 +25,8 @@ namespace Editor.Objects
 		};
 		public static BindTextureDelegate BindTexture = _ => nint.Zero;
 		public static GetTextureDelegate GetTexture = _ => null;
-		public static UnbindTextureDelegate UnbindTexture = _ => false;
-		public static GetTextureDictionaryForRawUseDelegate GetTextureDictionaryForRawUse = () => ref Unsafe.NullRef<Dictionary<nint, Texture2D>>();
+		public static UnbindTextureDelegate UnbindTexture = _ => { };
+		public static GetTextureDictionaryForRawUseDelegate GetTextureDictionaryForRawUse = () => null;
 		public static OnRemoveTextureDelegate OnRemoveTexture = _ => { };
 
 		public static GetCameraZoomDelegate GetCameraZoom = () => 1;

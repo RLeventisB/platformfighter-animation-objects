@@ -135,11 +135,8 @@ namespace Editor.Objects
 		[JsonIgnore]
 		public object DefaultValue;
 
-		[JsonInclude]
 		public List<Keyframe> keyframes;
-		[JsonInclude]
 		public List<KeyframeLink> links;
-		[JsonInclude]
 		public List<string> tags;
 		[JsonIgnore]
 		public (object value, int frame) cachedValue;
@@ -203,10 +200,10 @@ namespace Editor.Objects
 		{
 			foreach (Keyframe keyframe in link)
 			{
-				keyframe.ContainingLink = (KeyframeLinkOld)link;
+				keyframe.ContainingLink = link;
 			}
 
-			links.Add((KeyframeLinkOld)link);
+			links.Add(link);
 
 			InvalidateCachedValue();
 		}
@@ -220,7 +217,7 @@ namespace Editor.Objects
 
 			ExternalActions.OnDeleteLink(link);
 			
-			links.Remove((KeyframeLinkOld)link);
+			links.Remove(link);
 
 			InvalidateCachedValue();
 		}
