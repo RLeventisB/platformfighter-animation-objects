@@ -3,7 +3,6 @@
 using Microsoft.Xna.Framework;
 
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 
 namespace Editor.Objects
@@ -190,7 +189,10 @@ namespace Editor.Objects
 		{
 			Keyframe keyframe = keyframes[index];
 
-			keyframe.ContainingLink?.Remove(keyframes[index]);
+			foreach (KeyframeLink link in links)
+			{
+				link.Remove(keyframe);
+			}
 
 			keyframes.RemoveAt(index);
 
@@ -199,11 +201,8 @@ namespace Editor.Objects
 
 		public void AddLink(KeyframeLink link)
 		{
-			foreach (Keyframe keyframe in link)
-			{
-				keyframe.ContainingLink = link;
-			}
-
+			link.ContainingValue = this;
+			
 			links.Add(link);
 
 			InvalidateCachedValue();
@@ -211,11 +210,8 @@ namespace Editor.Objects
 
 		public void RemoveLink(KeyframeLink link)
 		{
-			foreach (Keyframe keyframe in link)
-			{
-				keyframe.ContainingLink = null;
-			}
-
+			link.ContainingValue = null;
+			
 			ExternalActions.OnDeleteLink(link);
 
 			links.Remove(link);
@@ -276,7 +272,7 @@ namespace Editor.Objects
 				keyframe = keyframeValue.keyframes[keyFrameIndex]; // obtener anterior frame
 			}
 
-			KeyframeLink link = keyframe.ContainingLink;
+			KeyframeLink link = FindContainingLink(keyframeValue, keyframe);
 
 			if (link is null || link.Count == 1)
 			{
@@ -287,7 +283,7 @@ namespace Editor.Objects
 				return true;
 			}
 
-			if (frame <= 0) // fast returns
+			if (frame <= link.FirstKeyframe.Frame) // fast returns (for real this time)
 			{
 				value = link.FirstKeyframe.Value;
 
@@ -302,132 +298,147 @@ namespace Editor.Objects
 			}
 
 			int linkFrameDuration = link.LastKeyframe.Frame - link.FirstKeyframe.Frame;
-			float progressedFrame = (frame - link.FirstKeyframe.Frame) / (float)linkFrameDuration;
-			float usedFrame = progressedFrame;
-
-			switch (link.InterpolationType)
-			{
-				case InterpolationType.Squared:
-					usedFrame *= progressedFrame;
-
-					break;
-				case InterpolationType.InverseSquared:
-					usedFrame = 1 - (1 - progressedFrame) * (1 - progressedFrame);
-
-					break;
-				case InterpolationType.SmoothStep:
-					usedFrame = Easing.Quadratic.InOut(progressedFrame);
-
-					break;
-				case InterpolationType.Cubed:
-					usedFrame *= progressedFrame * progressedFrame;
-
-					break;
-				case InterpolationType.InverseCubed:
-					usedFrame = 1 - (1 - progressedFrame) * (1 - progressedFrame) * (1 - progressedFrame);
-
-					break;
-				case InterpolationType.CubedSmoothStep:
-					usedFrame = Easing.Cubic.InOut(progressedFrame);
-
-					break;
-				case InterpolationType.ElasticOut:
-					usedFrame = Easing.Elastic.Out(progressedFrame);
-
-					break;
-				case InterpolationType.ElasticInOut:
-					usedFrame = Easing.Elastic.InOut(progressedFrame);
-
-					break;
-				case InterpolationType.ElasticIn:
-					usedFrame = Easing.Elastic.In(progressedFrame);
-
-					break;
-				case InterpolationType.BounceIn:
-					usedFrame = Easing.Bounce.In(progressedFrame);
-
-					break;
-				case InterpolationType.BounceOut:
-					usedFrame = Easing.Bounce.Out(progressedFrame);
-
-					break;
-				case InterpolationType.BounceInOut:
-					usedFrame = Easing.Bounce.InOut(progressedFrame);
-
-					break;
-				case InterpolationType.SineIn:
-					usedFrame = Easing.Sinusoidal.In(progressedFrame);
-
-					break;
-				case InterpolationType.SineOut:
-					usedFrame = Easing.Sinusoidal.Out(progressedFrame);
-
-					break;
-				case InterpolationType.SineInOut:
-					usedFrame = Easing.Sinusoidal.InOut(progressedFrame);
-
-					break;
-				case InterpolationType.ExponentialIn:
-					usedFrame = Easing.Exponential.In(progressedFrame);
-
-					break;
-				case InterpolationType.ExponentialOut:
-					usedFrame = Easing.Exponential.Out(progressedFrame);
-
-					break;
-				case InterpolationType.ExponentialInOut:
-					usedFrame = Easing.Exponential.InOut(progressedFrame);
-
-					break;
-				case InterpolationType.CircularIn:
-					usedFrame = Easing.Circular.In(progressedFrame);
-
-					break;
-				case InterpolationType.CircularOut:
-					usedFrame = Easing.Circular.Out(progressedFrame);
-
-					break;
-				case InterpolationType.CircularInOut:
-					usedFrame = Easing.Circular.InOut(progressedFrame);
-
-					break;
-				case InterpolationType.BackIn:
-					usedFrame = Easing.Back.In(progressedFrame);
-
-					break;
-				case InterpolationType.BackOut:
-					usedFrame = Easing.Back.Out(progressedFrame);
-
-					break;
-				case InterpolationType.BackInOut:
-					usedFrame = Easing.Back.InOut(progressedFrame);
-
-					break;
-			}
+			float progress;
 
 			if (link.UseRelativeProgressCalculation)
 			{
-				float interpolatedFrame = link.FirstKeyframe.Frame + usedFrame * linkFrameDuration;
-				keyFrameIndex = keyframeValue.FindIndexByKeyframe((int)interpolatedFrame);
-
-				if (keyFrameIndex < 0)
-				{
-					keyFrameIndex = ~keyFrameIndex - 1;
-				}
-
-				keyFrameIndex = Math.Clamp(keyFrameIndex, 0, link.Count - 2);
-
-				float localProgress = InterpolateFunctions.InverseLerp(interpolatedFrame, link.GetKeyframeClamped(keyFrameIndex).Frame, link.GetKeyframeClamped(keyFrameIndex + 1).Frame);
-				usedFrame = (keyFrameIndex + localProgress) / (link.Count - 1);
+				int firstKeyframeIndex = keyframeValue.FindIndexByKeyframe(link.FirstKeyframe);
+				Keyframe nextKeyframe = keyframeValue.keyframes[keyFrameIndex + 1];
+				progress = (keyFrameIndex - firstKeyframeIndex + (float)(frame - keyframe.Frame) / (nextKeyframe.Frame - keyframe.Frame)) / (link.Count - 1);
+			}
+			else
+			{
+				progress = (frame - link.FirstKeyframe.Frame) / (float)linkFrameDuration;
 			}
 
-			object[] objects = link.Keyframes.Select(v => v.Value).ToArray();
-			value = interpolator.Interpolate(usedFrame, objects);
+			float usedProgress = ApplyInterpolation(link.InterpolationType, progress);
+			object[] objects = link.GetKeyframes().Select(v => v.Value).ToArray();
+			value = interpolator.Interpolate(usedProgress, objects);
 
 			if (CacheValueOnInterpolate)
 				keyframeValue.cachedValue = (value, frame);
 
 			return true;
+		}
+
+		public static KeyframeLink FindContainingLink(KeyframeableValue value, Keyframe keyframe)
+		{
+			foreach (KeyframeLink link in value.links.OrderBy(v => v.FirstKeyframe))
+			{
+				if (link.ContainsFrame(keyframe.Frame))
+				{
+					return link;
+				}
+			}
+
+			return null;
+		}
+
+		private static float ApplyInterpolation(InterpolationType type, float progress)
+		{
+			float oldProgress = progress;
+
+			switch (type)
+			{
+				case InterpolationType.Squared:
+					progress *= oldProgress;
+
+					break;
+				case InterpolationType.InverseSquared:
+					progress = 1 - (1 - oldProgress) * (1 - oldProgress);
+
+					break;
+				case InterpolationType.SmoothStep:
+					progress = Easing.Quadratic.InOut(oldProgress);
+
+					break;
+				case InterpolationType.Cubed:
+					progress *= oldProgress * oldProgress;
+
+					break;
+				case InterpolationType.InverseCubed:
+					progress = 1 - (1 - oldProgress) * (1 - oldProgress) * (1 - oldProgress);
+
+					break;
+				case InterpolationType.CubedSmoothStep:
+					progress = Easing.Cubic.InOut(oldProgress);
+
+					break;
+				case InterpolationType.ElasticOut:
+					progress = Easing.Elastic.Out(oldProgress);
+
+					break;
+				case InterpolationType.ElasticInOut:
+					progress = Easing.Elastic.InOut(oldProgress);
+
+					break;
+				case InterpolationType.ElasticIn:
+					progress = Easing.Elastic.In(oldProgress);
+
+					break;
+				case InterpolationType.BounceIn:
+					progress = Easing.Bounce.In(oldProgress);
+
+					break;
+				case InterpolationType.BounceOut:
+					progress = Easing.Bounce.Out(oldProgress);
+
+					break;
+				case InterpolationType.BounceInOut:
+					progress = Easing.Bounce.InOut(oldProgress);
+
+					break;
+				case InterpolationType.SineIn:
+					progress = Easing.Sinusoidal.In(oldProgress);
+
+					break;
+				case InterpolationType.SineOut:
+					progress = Easing.Sinusoidal.Out(oldProgress);
+
+					break;
+				case InterpolationType.SineInOut:
+					progress = Easing.Sinusoidal.InOut(oldProgress);
+
+					break;
+				case InterpolationType.ExponentialIn:
+					progress = Easing.Exponential.In(oldProgress);
+
+					break;
+				case InterpolationType.ExponentialOut:
+					progress = Easing.Exponential.Out(oldProgress);
+
+					break;
+				case InterpolationType.ExponentialInOut:
+					progress = Easing.Exponential.InOut(oldProgress);
+
+					break;
+				case InterpolationType.CircularIn:
+					progress = Easing.Circular.In(oldProgress);
+
+					break;
+				case InterpolationType.CircularOut:
+					progress = Easing.Circular.Out(oldProgress);
+
+					break;
+				case InterpolationType.CircularInOut:
+					progress = Easing.Circular.InOut(oldProgress);
+
+					break;
+				case InterpolationType.BackIn:
+					progress = Easing.Back.In(oldProgress);
+
+					break;
+				case InterpolationType.BackOut:
+					progress = Easing.Back.Out(oldProgress);
+
+					break;
+				case InterpolationType.BackInOut:
+					progress = Easing.Back.InOut(oldProgress);
+
+					break;
+			}
+
+			return progress;
 		}
 
 		public abstract void CacheValue(int? frame);
