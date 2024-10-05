@@ -1,5 +1,9 @@
-﻿using System.Collections.ObjectModel;
+﻿using Microsoft.Xna.Framework;
+
+using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Globalization;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Editor.Objects
@@ -9,10 +13,8 @@ namespace Editor.Objects
 	{
 		public KeyframeableValue ContainingValue;
 		[JsonInclude]
+		[JsonConverter(typeof(KeyframeValueJsonConverter))]
 		private object value;
-		[JsonPropertyName("containing_link")]
-		[JsonInclude]
-		private KeyframeLink _containingLink;
 
 		[JsonConstructor]
 		public Keyframe()
@@ -48,6 +50,75 @@ namespace Editor.Objects
 		}
 
 		public override int GetHashCode() => Value.GetType().GetHashCode() ^ Frame;
+
+		public class KeyframeValueJsonConverter : JsonConverter<object>
+		{
+
+			public override object Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+			{
+				switch (reader.TokenType)
+				{
+					case JsonTokenType.StartObject: // is a vector2
+						reader.Read();
+						if(reader.TokenType != JsonTokenType.PropertyName) // x
+							throw new JsonException();
+
+						reader.Read();
+						float x = reader.GetSingle();
+						
+						reader.Read();
+						if(reader.TokenType != JsonTokenType.PropertyName) // y
+							throw new JsonException();
+
+						reader.Read();
+						float y = reader.GetSingle();
+
+						reader.Read();
+						if(reader.TokenType != JsonTokenType.EndObject) // y
+							throw new JsonException();
+
+						return new NVector2(x, y);
+					case JsonTokenType.Number: // oh no
+						if (!reader.TryGetInt32(out int valueInt))
+						{
+							if (!reader.TryGetSingle(out float valueSingle))
+							{
+								throw new JsonException();
+							}
+
+							return valueSingle;
+						}
+
+						return valueInt;
+				}
+				throw new JsonException();
+			}
+
+			public override void Write(Utf8JsonWriter writer, object value, JsonSerializerOptions options)
+			{
+				switch (value)
+				{
+					case int int32:
+						writer.WriteNumberValue(int32);
+						break;
+					case float single:
+						string number = single.ToString(NumberFormatInfo.InvariantInfo);
+
+						if (!number.Contains('.'))
+						{
+							number += ".0";
+						}
+						writer.WriteRawValue(number);
+						break;
+					case Vector2 vector2:
+						writer.WriteStartObject();
+						writer.WriteNumber("x", vector2.X);
+						writer.WriteNumber("y", vector2.Y);
+						writer.WriteEndObject();
+						break;
+				}
+			}
+		}
 	}
 	public class KeyframeLink
 	{
@@ -75,6 +146,7 @@ namespace Editor.Objects
 
 			InterpolationType = InterpolationType.Lineal;
 		}
+
 		public KeyframeLink(KeyframeableValue containingValue, IEnumerable<int> frames) : this()
 		{
 			ContainingValue = containingValue;
@@ -87,7 +159,9 @@ namespace Editor.Objects
 		private void AddRange(IEnumerable<Keyframe> keyframes)
 		{
 			_keyframes.AddRange(keyframes.Where(v => ContainingValue == v.ContainingValue).Select(v => v.Frame));
-		}private void AddRange(IEnumerable<int> frames)
+		}
+
+		private void AddRange(IEnumerable<int> frames)
 		{
 			_keyframes.AddRange(frames);
 		}
