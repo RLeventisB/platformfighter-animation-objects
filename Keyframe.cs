@@ -108,6 +108,11 @@ namespace Editor.Objects
 			_keyframes.Clear();
 		}
 
+		public void Sort()
+		{
+			_keyframes.Sort();
+		}
+
 		public bool Contains(Keyframe item) => _keyframes.Contains(item);
 
 		public void CopyTo(Keyframe[] array, int arrayIndex)
