@@ -8,6 +8,7 @@ namespace Editor.Objects
 		public static OnChangeLinkPropertyDelegate OnChangeLinkPropertyProperty = _ => { };
 		public static OnDeleteLinkDelegate OnDeleteLink = _ => { };
 		public static AreKeyframesSetOnModifyDelegate AreKeyframesSetOnModify = () => true;
+		public static AreKeyframesAddedToLinkOnModifyDelegate AreKeyframesAddedToLinkOnModify = () => true;
 		public static GetGraphicsDeviceDelegate GetGraphicsDevice = () => null;
 		public static GetTextureFrameByNameDelegate GetTextureFrameByName = _ => null;
 		public static GetTextureAnimationObjectByNameDelegate GetTextureAnimationObjectByName = _ => null;
@@ -42,6 +43,7 @@ namespace Editor.Objects
 		public delegate HitboxAnimationObject GetHitboxAnimationObjectByNameDelegate(string name);
 		public delegate int GetCurrentFrameDelegate();
 		public delegate bool AreKeyframesSetOnModifyDelegate();
+		public delegate bool AreKeyframesAddedToLinkOnModifyDelegate();
 
 		public delegate nint BindTextureDelegate(Texture2D texture);
 		public delegate Texture2D GetTextureDelegate(nint id);

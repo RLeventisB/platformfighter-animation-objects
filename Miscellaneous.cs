@@ -1,4 +1,5 @@
 ﻿global using NVector2 = System.Numerics.Vector2;
+
 using Microsoft.Xna.Framework;
 
 using System.Runtime.CompilerServices;
@@ -55,6 +56,7 @@ namespace Editor.Objects
 
 			return Vector2.CatmullRom(pointsList[index - 1], pointsList[index], pointsList[index + 1], pointsList[index + 2], localProgress);
 		}
+
 		public static float InverseLerp(float value, float min, float max)
 		{
 			return (value - min) / (max - min);
@@ -85,18 +87,22 @@ namespace Editor.Objects
 
 			return Math.Abs(rotatedX) <= halfWidth && Math.Abs(rotatedY) <= halfHeight;
 		}
+
 		public static unsafe object CloneWithoutReferences(this object obj)
 		{
 			Type underlyingType = obj.GetType();
 			object clone = Activator.CreateInstance(underlyingType);
-			
+
 			Unsafe.CopyBlock(&clone, &obj, (uint)Marshal.SizeOf(underlyingType));
+
 			return clone;
 		}
+
 		public static bool IsInsideRectangle(Vector2 position, Vector2 size, Vector2 point)
 		{
 			return Math.Abs(point.X - position.X) <= size.X / 2 && Math.Abs(point.Y - position.Y) <= size.Y / 2;
 		}
+
 		public static Color MultiplyAlpha(this Color color, float multiplier)
 		{
 			color.A = (byte)MathHelper.Clamp(color.A * multiplier, byte.MinValue, byte.MaxValue);
@@ -112,7 +118,7 @@ namespace Editor.Objects
 
 			return color;
 		}
-		
+
 		public static bool IsPointInsideRotatedRectangle(Vector2 center, Vector2 size, float rotation, Vector2 pivot, Vector2 point)
 		{
 			// ew chatgpt again (i am running out of time)
@@ -157,7 +163,7 @@ namespace Editor.Objects
 		{
 			return (x2 - x1) * (py - y1) - (y2 - y1) * (px - x1);
 		}
-		
+
 		public static Vector2 Abs(this Vector2 vector2)
 		{
 			return new Vector2(MathF.Abs(vector2.X), MathF.Abs(vector2.Y));

@@ -132,10 +132,9 @@ namespace Editor.Objects
 			(fraction, first, second) => first + (second - first) * fraction,
 			(fraction, values) => InterpolateFunctions.InterpolateCatmullRom(values, fraction * (values.Length - 1)));
 
-		[JsonIgnore]
 		public object DefaultValue;
 
-		public List<Keyframe> keyframes;
+		public KeyframeList keyframes;
 		public List<KeyframeLink> links;
 		public List<string> tags;
 		[JsonIgnore]
@@ -151,44 +150,45 @@ namespace Editor.Objects
 			Name = name;
 
 			if (createDefaultKeyframe)
-				keyframes.Add(new Keyframe(this, 0, DefaultValue));
+				keyframes.SetOrModify(new Keyframe(this, 0, DefaultValue));
 		}
 
 		[JsonConstructor]
 		protected KeyframeableValue()
 		{
 			tags = new List<string>();
-			keyframes = new List<Keyframe>();
+			keyframes = new KeyframeList();
 			links = new List<KeyframeLink>();
 		}
 
-		public ref Keyframe this[int index] => ref CollectionsMarshal.AsSpan(keyframes)[index];
 		public int KeyframeCount => keyframes.Count;
 		public int FirstFrame => HasKeyframes() ? keyframes[0].Frame : -1;
 		public int LastFrame => HasKeyframes() ? keyframes[KeyframeCount - 1].Frame : -1;
 		public Keyframe FirstKeyframe => HasKeyframes() ? keyframes[0] : null;
 		public Keyframe LastKeyframe => HasKeyframes() ? keyframes[KeyframeCount - 1].Frame : null;
 
-		public int Add(Keyframe value, bool invalidate = true)
+		public void Add(Keyframe value, bool invalidate = true, bool onlySetValueOnModify = true)
 		{
-			int index = FindIndexByKeyframe(value);
+			keyframes.SetOrModify(value, onlySetValueOnModify);
 
-			if (index >= 0)
-				keyframes[index].Value = value.Value;
-			else
-			{
-				keyframes.Insert(~index, value);
-			}
-
-			if(invalidate)
+			if (invalidate)
 				InvalidateCachedValue();
 
-			return index;
+			if (ExternalActions.AreKeyframesAddedToLinkOnModify())
+			{
+				foreach (KeyframeLink link in links)
+				{
+					if (link.IsFrameOnRange(value.Frame))
+					{
+						link.Add(value);
+					}
+				}
+			}
 		}
 
 		public void RemoveAt(int index)
 		{
-			Keyframe keyframe = this[index];
+			Keyframe keyframe = keyframes[index];
 
 			keyframe.ContainingLink?.Remove(keyframes[index]);
 
@@ -217,7 +217,7 @@ namespace Editor.Objects
 			}
 
 			ExternalActions.OnDeleteLink(link);
-			
+
 			links.Remove(link);
 
 			InvalidateCachedValue();
@@ -244,8 +244,6 @@ namespace Editor.Objects
 
 			return foundIndex >= 0 ? foundIndex : ~foundIndex;
 		}
-
-		public ref Keyframe GetKeyframeReferenceAt(int index) => ref CollectionsMarshal.AsSpan(keyframes)[index];
 
 		public static bool Interpolate(KeyframeableValue keyframeValue, int frame, IInterpolator interpolator, out object value)
 		{
@@ -449,6 +447,21 @@ namespace Editor.Objects
 				case int:
 					return IntegerInterpolator;
 				case Vector2:
+					return Vector2Interpolator;
+			}
+
+			return null;
+		}
+
+		public static IInterpolator ResolveInterpolator(KeyframeableValue value)
+		{
+			switch (value)
+			{
+				case FloatKeyframeValue:
+					return FloatInterpolator;
+				case IntKeyframeValue:
+					return IntegerInterpolator;
+				case Vector2KeyframeValue:
 					return Vector2Interpolator;
 			}
 

@@ -41,15 +41,7 @@ namespace Editor.Objects
 		[JsonIgnore]
 		public KeyframeLink ContainingLink
 		{
-			get
-			{
-				if (_containingLink is not null && _containingLink.Count <= 1)
-				{
-					ContainingValue.RemoveLink(_containingLink);
-				}
-
-				return _containingLink;
-			}
+			get => _containingLink;
 			set => _containingLink = value;
 		}
 
@@ -63,9 +55,9 @@ namespace Editor.Objects
 	{
 		[JsonPropertyName("keyframes")]
 		[JsonInclude]
-		private List<Keyframe> _keyframes;
+		private KeyframeList _keyframes;
 		[JsonIgnore]
-		public IReadOnlyList<Keyframe> Keyframes => _keyframes;
+		public ReadonlyKeyframeList Keyframes => new ReadonlyKeyframeList(_keyframes);
 		public KeyframeableValue ContainingValue;
 		private InterpolationType _interpolationType;
 		public bool UseRelativeProgressCalculation = true;
@@ -73,7 +65,7 @@ namespace Editor.Objects
 		[JsonConstructor]
 		public KeyframeLink()
 		{
-			_keyframes = new List<Keyframe>();
+			_keyframes = new KeyframeList();
 			InterpolationType = InterpolationType.Lineal;
 		}
 
@@ -88,8 +80,7 @@ namespace Editor.Objects
 
 		private void AddRange(IEnumerable<Keyframe> keyframes)
 		{
-			_keyframes.AddRange(keyframes);
-			_keyframes.Sort();
+			_keyframes.SetOrModifyRange(keyframes);
 		}
 
 		public Keyframe this[int index] => _keyframes[index];
@@ -104,16 +95,14 @@ namespace Editor.Objects
 				ExternalActions.OnChangeLinkPropertyProperty(this);
 			}
 		}
-		public int Count => Keyframes.Count;
-		public Keyframe FirstKeyframe => Keyframes.FirstOrDefault(-1);
-		public Keyframe LastKeyframe => Keyframes.LastOrDefault(1);
+		public int Count => _keyframes.Count;
+		public Keyframe FirstKeyframe => _keyframes.FirstOrDefault(-1);
+		public Keyframe LastKeyframe => _keyframes.LastOrDefault(1);
 
-		public Keyframe GetKeyframeClamped(int index) => Count == 0 ? null : Keyframes[Math.Clamp(index, 0, Count - 1)];
+		public Keyframe GetKeyframeClamped(int index) => Count == 0 ? null : _keyframes[Math.Clamp(index, 0, Count - 1)];
 
-		public IEnumerator<Keyframe> GetEnumerator() => Keyframes.ToList().GetEnumerator();
-
-		public Keyframe GetAt(int index) => ContainingValue.GetKeyframeReferenceAt(index);
-
+		public IEnumerator<Keyframe> GetEnumerator() => _keyframes.ToList().GetEnumerator();
+		
 		public void Clear()
 		{
 			_keyframes.Clear();
@@ -126,11 +115,10 @@ namespace Editor.Objects
 			_keyframes.CopyTo(array, arrayIndex);
 		}
 
-		public bool IsReadOnly => false;
-
 		public void Add(Keyframe item)
 		{
 			_keyframes.Add(item);
+			item.ContainingLink = this;
 			_keyframes.Sort();
 		}
 
@@ -142,8 +130,9 @@ namespace Editor.Objects
 			return remove;
 		}
 
-		public void ChangedFrame(Keyframe keyframe)
+		public bool IsFrameOnRange(int valueFrame)
 		{
+			return FirstKeyframe.Frame - valueFrame < LastKeyframe.Frame - FirstKeyframe.Frame;
 		}
 	}
 	public enum InterpolationType : byte
