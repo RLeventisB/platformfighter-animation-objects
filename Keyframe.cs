@@ -137,7 +137,7 @@ namespace Editor.Objects
 
 		public bool IsFrameOnRange(int valueFrame)
 		{
-			return FirstKeyframe.Frame - valueFrame < LastKeyframe.Frame - FirstKeyframe.Frame;
+			return valueFrame >= FirstKeyframe.Frame && valueFrame <= LastKeyframe.Frame;
 		}
 	}
 	public enum InterpolationType : byte
