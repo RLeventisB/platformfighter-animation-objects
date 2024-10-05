@@ -42,7 +42,10 @@ namespace Editor.Objects
 
 		public int CompareTo(Keyframe other) => Frame.CompareTo(other.Frame);
 
-		public static implicit operator Keyframe(int value) => new Keyframe(null, value, default);
+		public static Keyframe CreateDummyKeyframe(int frame)
+		{
+			return new Keyframe(null, frame, default);
+		}
 
 		public override int GetHashCode() => Value.GetType().GetHashCode() ^ Frame;
 	}
@@ -52,7 +55,7 @@ namespace Editor.Objects
 		[JsonInclude]
 		private List<int> _keyframes;
 		[JsonIgnore]
-		public ReadOnlyCollection<int> Keyframes => _keyframes.AsReadOnly();
+		public ReadOnlyCollection<int> Frames => _keyframes.AsReadOnly();
 		public KeyframeableValue ContainingValue;
 		private InterpolationType _interpolationType;
 		public bool UseRelativeProgressCalculation = true;
@@ -72,13 +75,24 @@ namespace Editor.Objects
 
 			InterpolationType = InterpolationType.Lineal;
 		}
+		public KeyframeLink(KeyframeableValue containingValue, IEnumerable<int> frames) : this()
+		{
+			ContainingValue = containingValue;
+			AddRange(frames);
+			_keyframes.Sort();
+
+			InterpolationType = InterpolationType.Lineal;
+		}
 
 		private void AddRange(IEnumerable<Keyframe> keyframes)
 		{
 			_keyframes.AddRange(keyframes.Where(v => ContainingValue == v.ContainingValue).Select(v => v.Frame));
+		}private void AddRange(IEnumerable<int> frames)
+		{
+			_keyframes.AddRange(frames);
 		}
 
-		public Keyframe this[int index] => _keyframes[index];
+		public int this[int index] => _keyframes[index];
 		[JsonInclude]
 		public InterpolationType InterpolationType
 		{
@@ -91,8 +105,8 @@ namespace Editor.Objects
 			}
 		}
 		public int Count => _keyframes.Count;
-		public Keyframe FirstKeyframe => _keyframes.FirstOrDefault(-1);
-		public Keyframe LastKeyframe => _keyframes.LastOrDefault(1);
+		public Keyframe FirstKeyframe => Keyframe.CreateDummyKeyframe(_keyframes.FirstOrDefault(-1));
+		public Keyframe LastKeyframe => Keyframe.CreateDummyKeyframe(_keyframes.LastOrDefault(1));
 
 		public Keyframe GetKeyframeClamped(int index) => ContainingValue.GetKeyframe(_keyframes[Math.Clamp(index, 0, Count - 1)]);
 

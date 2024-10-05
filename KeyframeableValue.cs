@@ -164,7 +164,7 @@ namespace Editor.Objects
 		public int FirstFrame => HasKeyframes() ? keyframes[0].Frame : -1;
 		public int LastFrame => HasKeyframes() ? keyframes[KeyframeCount - 1].Frame : -1;
 		public Keyframe FirstKeyframe => HasKeyframes() ? keyframes[0] : null;
-		public Keyframe LastKeyframe => HasKeyframes() ? keyframes[KeyframeCount - 1].Frame : null;
+		public Keyframe LastKeyframe => HasKeyframes() ? keyframes[KeyframeCount - 1] : null;
 
 		public void Add(Keyframe value, bool invalidate = true, bool onlySetValueOnModify = true)
 		{
@@ -227,7 +227,7 @@ namespace Editor.Objects
 
 		public Keyframe GetKeyframe(int frame)
 		{
-			int foundIndex = FindIndexByKeyframe(frame);
+			int foundIndex = FindIndexByKeyframe(Keyframe.CreateDummyKeyframe(frame));
 
 			return foundIndex >= 0 ? keyframes[foundIndex] : null;
 		}
@@ -255,7 +255,7 @@ namespace Editor.Objects
 				return true;
 			}
 
-			int keyFrameIndex = keyframeValue.FindIndexByKeyframe(frame);
+			int keyFrameIndex = keyframeValue.FindIndexByKeyframe(Keyframe.CreateDummyKeyframe(frame));
 			Keyframe keyframe;
 
 			if (keyFrameIndex >= 0)
@@ -500,7 +500,7 @@ namespace Editor.Objects
 
 		public bool RemoveKeyframe(int frame)
 		{
-			int index = FindIndexByKeyframe(frame);
+			int index = FindIndexByKeyframe(Keyframe.CreateDummyKeyframe(frame));
 
 			if (index < 0)
 				return false;
@@ -531,14 +531,7 @@ namespace Editor.Objects
 
 			foreach (KeyframeLink link in other.links)
 			{
-				List<int> linkKeyframesIndices = new List<int>();
-
-				foreach (Keyframe keyframe in link)
-				{
-					linkKeyframesIndices.Add(other.keyframes.IndexOf(keyframe));
-				}
-
-				AddLink(new KeyframeLink(this, linkKeyframesIndices.Select(v => keyframes[v])));
+				AddLink(new KeyframeLink(this, link.Frames));
 			}
 
 			return this;
