@@ -178,7 +178,7 @@ namespace Editor.Objects
 			{
 				foreach (KeyframeLink link in links)
 				{
-					if (link.IsFrameOnRange(value.Frame) && link.Contains(value))
+					if (link.IsFrameOnRange(value.Frame) && !link.Contains(value))
 					{
 						link.Add(value);
 					}
