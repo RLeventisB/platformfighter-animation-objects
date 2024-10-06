@@ -273,7 +273,7 @@ namespace Editor.Objects
 				keyframe = keyframeValue.keyframes[keyFrameIndex]; // obtener anterior frame
 			}
 
-			KeyframeLink link = FindContainingLink(keyframeValue, keyframe);
+			KeyframeLink link = FindContainingLinks(keyframeValue, keyframe).Where(v => v.ContainsFrame(frame)).FirstOrDefault((KeyframeLink)null);
 
 			if (link is null || link.Count == 1)
 			{
@@ -335,6 +335,22 @@ namespace Editor.Objects
 			}
 
 			return null;
+		}
+		public static List<KeyframeLink> FindContainingLinks(KeyframeableValue value, Keyframe keyframe)
+		{
+			value.SanitizeLinks();
+
+			List<KeyframeLink> list = new List<KeyframeLink>();
+
+			foreach (KeyframeLink link in value.links.OrderBy(v => v.FirstKeyframe))
+			{
+				if (link.ContainsFrame(keyframe.Frame))
+				{
+					list.Add(link);
+				}
+			}
+
+			return list;
 		}
 
 		private void SanitizeLinks()
@@ -523,7 +539,7 @@ namespace Editor.Objects
 			return true;
 		}
 
-		public bool RemoveKeyframe(int frame)
+		public bool RemoveKeyframe(int frame, bool invalidate = true)
 		{
 			int index = FindIndexByKeyframe(Keyframe.CreateDummyKeyframe(frame));
 
@@ -536,7 +552,8 @@ namespace Editor.Objects
 
 			keyframes.RemoveAt(index);
 
-			InvalidateCachedValue();
+			if(invalidate)
+				InvalidateCachedValue();
 
 			return true;
 		}

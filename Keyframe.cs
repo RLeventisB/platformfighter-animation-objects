@@ -243,7 +243,11 @@ namespace Editor.Objects
 
 		public bool Remove(Keyframe keyframe)
 		{
-			return HaveSameContainingValue(keyframe) && _keyframes.Remove(keyframe.Frame);
+			return HaveSameContainingValue(keyframe) && Remove(keyframe.Frame);
+		}
+		public bool Remove(int frame)
+		{
+			return _keyframes.Remove(frame);
 		}
 
 		public bool HaveSameContainingValue(Keyframe keyframe)
