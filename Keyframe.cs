@@ -256,6 +256,21 @@ namespace Editor.Objects
 			return valueFrame >= FirstKeyframe.Frame && valueFrame <= LastKeyframe.Frame;
 		}
 
+		public void SanitizeValues()
+		{
+			List<int> indices = new List<int>();
+
+			foreach (int frame in _keyframes)
+			{
+				if (indices.Contains(frame))
+					continue;
+
+				indices.Add(frame);
+			}
+
+			_keyframes = indices;
+		}
+
 		public IEnumerable<Keyframe> GetKeyframes()
 		{
 			return _keyframes.Select(v => ContainingValue.GetKeyframe(v));
