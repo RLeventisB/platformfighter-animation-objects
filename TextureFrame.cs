@@ -1,5 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 
 namespace Editor.Objects
@@ -114,6 +116,7 @@ namespace Editor.Objects
 			}
 		}
 	}
+	[DebuggerDisplay("{Name}")]
 	public class TextureFrame : IDisposable, IAnimationObject
 	{
 		public string Path { get; set; }

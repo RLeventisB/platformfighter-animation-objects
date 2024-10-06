@@ -1,9 +1,11 @@
 ﻿using Microsoft.Xna.Framework;
 
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 
 namespace Editor.Objects
 {
+	[DebuggerDisplay("{Name}")]
 	public class HitboxAnimationObject : IAnimationObject
 	{
 		[JsonConstructor]

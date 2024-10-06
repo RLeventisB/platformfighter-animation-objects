@@ -53,6 +53,7 @@ namespace Editor.Objects
 
 		public class KeyframeValueJsonConverter : JsonConverter<object>
 		{
+			public override bool CanConvert(Type typeToConvert) => true;
 
 			public override object Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 			{
@@ -60,24 +61,27 @@ namespace Editor.Objects
 				{
 					case JsonTokenType.StartObject: // is a vector2
 						reader.Read();
-						if(reader.TokenType != JsonTokenType.PropertyName) // x
+
+						if (reader.TokenType != JsonTokenType.PropertyName) // x
 							throw new JsonException();
 
 						reader.Read();
 						float x = reader.GetSingle();
-						
+
 						reader.Read();
-						if(reader.TokenType != JsonTokenType.PropertyName) // y
+
+						if (reader.TokenType != JsonTokenType.PropertyName) // y
 							throw new JsonException();
 
 						reader.Read();
 						float y = reader.GetSingle();
 
 						reader.Read();
-						if(reader.TokenType != JsonTokenType.EndObject) // y
+
+						if (reader.TokenType != JsonTokenType.EndObject) // y
 							throw new JsonException();
 
-						return new NVector2(x, y);
+						return new Vector2(x, y);
 					case JsonTokenType.Number: // oh no
 						if (!reader.TryGetInt32(out int valueInt))
 						{
@@ -91,6 +95,7 @@ namespace Editor.Objects
 
 						return valueInt;
 				}
+
 				throw new JsonException();
 			}
 
@@ -98,8 +103,16 @@ namespace Editor.Objects
 			{
 				switch (value)
 				{
+					case JsonElement element:
+						string data = element.GetRawText();
+						string[] lines = data.Split(Environment.NewLine).Where(v => !v.Contains("\"$id\"")).ToArray(); // no
+						data = string.Join(Environment.NewLine, lines);
+						writer.WriteRawValue(data);
+
+						break;
 					case int int32:
 						writer.WriteNumberValue(int32);
+
 						break;
 					case float single:
 						string number = single.ToString(NumberFormatInfo.InvariantInfo);
@@ -108,18 +121,22 @@ namespace Editor.Objects
 						{
 							number += ".0";
 						}
+
 						writer.WriteRawValue(number);
+
 						break;
 					case Vector2 vector2:
 						writer.WriteStartObject();
 						writer.WriteNumber("x", vector2.X);
 						writer.WriteNumber("y", vector2.Y);
 						writer.WriteEndObject();
+
 						break;
 				}
 			}
 		}
 	}
+	[DebuggerDisplay("Count = {Count}, ContainingValue = {ContainingValue}")]
 	public class KeyframeLink
 	{
 		[JsonPropertyName("keyframes")]
@@ -142,7 +159,6 @@ namespace Editor.Objects
 		{
 			ContainingValue = containingValue;
 			AddRange(keyframes);
-			_keyframes.Sort();
 
 			InterpolationType = InterpolationType.Lineal;
 		}
@@ -151,19 +167,20 @@ namespace Editor.Objects
 		{
 			ContainingValue = containingValue;
 			AddRange(frames);
-			_keyframes.Sort();
 
 			InterpolationType = InterpolationType.Lineal;
 		}
 
 		private void AddRange(IEnumerable<Keyframe> keyframes)
 		{
-			_keyframes.AddRange(keyframes.Where(v => ContainingValue == v.ContainingValue).Select(v => v.Frame));
+			_keyframes.AddRange(keyframes.Where(HaveSameContainingValue).Select(v => v.Frame));
+			_keyframes.Sort();
 		}
 
 		private void AddRange(IEnumerable<int> frames)
 		{
 			_keyframes.AddRange(frames);
+			_keyframes.Sort();
 		}
 
 		public int this[int index] => _keyframes[index];
@@ -179,8 +196,8 @@ namespace Editor.Objects
 			}
 		}
 		public int Count => _keyframes.Count;
-		public Keyframe FirstKeyframe => Keyframe.CreateDummyKeyframe(_keyframes.FirstOrDefault(-1));
-		public Keyframe LastKeyframe => Keyframe.CreateDummyKeyframe(_keyframes.LastOrDefault(1));
+		public Keyframe FirstKeyframe => Count == 0 ? Keyframe.CreateDummyKeyframe(-1) : ContainingValue.GetKeyframe(_keyframes[0]);
+		public Keyframe LastKeyframe => Count == 0 ? Keyframe.CreateDummyKeyframe(-1) : ContainingValue.GetKeyframe(_keyframes[Count - 1]);
 
 		public Keyframe GetKeyframeClamped(int index) => ContainingValue.GetKeyframe(_keyframes[Math.Clamp(index, 0, Count - 1)]);
 
@@ -196,7 +213,7 @@ namespace Editor.Objects
 			_keyframes.Sort();
 		}
 
-		public bool Contains(Keyframe item) => ContainingValue == item.ContainingValue && _keyframes.Contains(item.Frame);
+		public bool Contains(Keyframe keyframe) => HaveSameContainingValue(keyframe) && _keyframes.Contains(keyframe.Frame);
 
 		public bool ContainsFrame(int frame) => _keyframes.Contains(frame);
 
@@ -205,21 +222,33 @@ namespace Editor.Objects
 			_keyframes.CopyTo(array, arrayIndex);
 		}
 
-		public void Add(Keyframe item)
+		public void Add(Keyframe keyframe)
 		{
-			_keyframes.Add(item.Frame);
-			_keyframes.Sort();
+			if (HaveSameContainingValue(keyframe))
+				Add(keyframe.Frame);
 		}
 
 		public void Add(int frame)
 		{
+			if (ContainsFrame(frame))
+			{
+				Debug.Write("trying to add already linked frame");
+
+				return;
+			}
+
 			_keyframes.Add(frame);
 			_keyframes.Sort();
 		}
 
-		public bool Remove(Keyframe item)
+		public bool Remove(Keyframe keyframe)
 		{
-			return item.ContainingValue == ContainingValue && _keyframes.Remove(item.Frame);
+			return HaveSameContainingValue(keyframe) && _keyframes.Remove(keyframe.Frame);
+		}
+
+		public bool HaveSameContainingValue(Keyframe keyframe)
+		{
+			return ReferenceEquals(keyframe.ContainingValue, ContainingValue);
 		}
 
 		public bool IsFrameOnRange(int valueFrame)

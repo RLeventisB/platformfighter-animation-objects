@@ -115,7 +115,7 @@ namespace Editor.Objects
 			cachedValue = (value, frame.Value);
 		}
 	}
-	[DebuggerDisplay("{Name}")]
+	[DebuggerDisplay("{Name}, {cachedValue}")]
 	public abstract class KeyframeableValue
 	{
 		// its 1:32 am i dont want to refactor another parameter on this boilerplate code
@@ -131,6 +131,7 @@ namespace Editor.Objects
 			(fraction, first, second) => first + (second - first) * fraction,
 			(fraction, values) => InterpolateFunctions.InterpolateCatmullRom(values, fraction * (values.Length - 1)));
 
+		[JsonConverter(typeof(Keyframe.KeyframeValueJsonConverter))]
 		public object DefaultValue;
 
 		public KeyframeList keyframes;
@@ -141,7 +142,7 @@ namespace Editor.Objects
 		public IAnimationObject Owner { get; init; }
 		public string Name { get; init; }
 
-		protected KeyframeableValue(IAnimationObject animationObject, object defaultValue, string name, Type type, bool createDefaultKeyframe = true) : this()
+		public KeyframeableValue(IAnimationObject animationObject, object defaultValue, string name, Type type, bool createDefaultKeyframe = true) : this()
 		{
 			DefaultValue = defaultValue;
 			cachedValue = (DefaultValue, -1);
@@ -177,7 +178,7 @@ namespace Editor.Objects
 			{
 				foreach (KeyframeLink link in links)
 				{
-					if (link.IsFrameOnRange(value.Frame))
+					if (link.IsFrameOnRange(value.Frame) && link.Contains(value))
 					{
 						link.Add(value);
 					}
@@ -202,7 +203,7 @@ namespace Editor.Objects
 		public void AddLink(KeyframeLink link)
 		{
 			link.ContainingValue = this;
-			
+
 			links.Add(link);
 
 			InvalidateCachedValue();
@@ -211,7 +212,7 @@ namespace Editor.Objects
 		public void RemoveLink(KeyframeLink link)
 		{
 			link.ContainingValue = null;
-			
+
 			ExternalActions.OnDeleteLink(link);
 
 			links.Remove(link);
@@ -248,7 +249,7 @@ namespace Editor.Objects
 			if (!keyframeValue.HasKeyframes())
 				return false;
 
-			if (CacheValueOnInterpolate && keyframeValue.cachedValue.frame == frame)
+			if (CacheValueOnInterpolate && keyframeValue.cachedValue.frame == frame && keyframeValue.cachedValue.value is not null)
 			{
 				value = keyframeValue.cachedValue.value;
 
@@ -323,6 +324,8 @@ namespace Editor.Objects
 
 		public static KeyframeLink FindContainingLink(KeyframeableValue value, Keyframe keyframe)
 		{
+			value.SanitizeLinks();
+
 			foreach (KeyframeLink link in value.links.OrderBy(v => v.FirstKeyframe))
 			{
 				if (link.ContainsFrame(keyframe.Frame))
@@ -332,6 +335,11 @@ namespace Editor.Objects
 			}
 
 			return null;
+		}
+
+		private void SanitizeLinks()
+		{
+			links.RemoveAll(v => v.Count <= 1);
 		}
 
 		private static float ApplyInterpolation(InterpolationType type, float progress)
@@ -498,12 +506,33 @@ namespace Editor.Objects
 			return keyframe;
 		}
 
+		public bool RemoveKeyframe(Keyframe keyframe)
+		{
+			int index = FindIndexByKeyframe(keyframe);
+
+			if (index < 0)
+				return false;
+
+			KeyframeLink link = FindContainingLink(this, keyframe);
+			link?.Remove(keyframe);
+
+			keyframes.RemoveAt(index);
+
+			InvalidateCachedValue();
+
+			return true;
+		}
+
 		public bool RemoveKeyframe(int frame)
 		{
 			int index = FindIndexByKeyframe(Keyframe.CreateDummyKeyframe(frame));
 
 			if (index < 0)
 				return false;
+
+			Keyframe keyframe = keyframes[index];
+			KeyframeLink link = FindContainingLink(this, keyframe);
+			link?.Remove(keyframe);
 
 			keyframes.RemoveAt(index);
 
