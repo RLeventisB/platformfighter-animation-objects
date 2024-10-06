@@ -547,8 +547,12 @@ namespace Editor.Objects
 				return false;
 
 			Keyframe keyframe = keyframes[index];
-			KeyframeLink link = FindContainingLink(this, keyframe);
-			link?.Remove(keyframe);
+			List<KeyframeLink> linkList = FindContainingLinks(this, keyframe);
+
+			foreach (KeyframeLink link in linkList)
+			{
+				link?.Remove(keyframe);
+			}
 
 			keyframes.RemoveAt(index);
 
