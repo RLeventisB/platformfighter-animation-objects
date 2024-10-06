@@ -273,7 +273,7 @@ namespace Editor.Objects
 				keyframe = keyframeValue.keyframes[keyFrameIndex]; // obtener anterior frame
 			}
 
-			KeyframeLink link = FindContainingLinks(keyframeValue, keyframe).Where(v => v.ContainsFrame(frame)).FirstOrDefault((KeyframeLink)null);
+			KeyframeLink link = FindContainingLinks(keyframeValue, keyframe).Where(v => v.IsFrameOnRange(frame)).FirstOrDefault((KeyframeLink)null);
 
 			if (link is null || link.Count == 1)
 			{
