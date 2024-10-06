@@ -342,7 +342,7 @@ namespace Editor.Objects
 
 			List<KeyframeLink> list = new List<KeyframeLink>();
 
-			foreach (KeyframeLink link in value.links.OrderBy(v => v.FirstKeyframe))
+			foreach (KeyframeLink link in value.links)
 			{
 				if (link.ContainsFrame(keyframe.Frame))
 				{
