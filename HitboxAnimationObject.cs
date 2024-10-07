@@ -105,14 +105,14 @@ namespace Editor.Objects
 			return frame >= SpawnFrame && frame < EndFrame;
 		}
 
-		public HitboxLine GetSelectedLine(Vector2 mouseWorld)
+		public HitboxLine GetSelectedLine(Vector2 mouseWorld, float marginScale = 1)
 		{
 			Vector2 position = Position.CachedValue;
 			Vector2 size = Size.CachedValue;
-			float topDistance = MathF.Abs(position.Y - size.Y / 2 - mouseWorld.Y) * ExternalActions.GetCameraZoom();
-			float rightDistance = MathF.Abs(position.X + size.X / 2 - mouseWorld.X) * ExternalActions.GetCameraZoom();
-			float bottomDistance = MathF.Abs(position.Y + size.Y / 2 - mouseWorld.Y) * ExternalActions.GetCameraZoom();
-			float leftDistance = MathF.Abs(position.X - size.X / 2 - mouseWorld.X) * ExternalActions.GetCameraZoom();
+			float topDistance = MathF.Abs(position.Y - size.Y / 2 - mouseWorld.Y) * marginScale;
+			float rightDistance = MathF.Abs(position.X + size.X / 2 - mouseWorld.X) * marginScale;
+			float bottomDistance = MathF.Abs(position.Y + size.Y / 2 - mouseWorld.Y) * marginScale;
+			float leftDistance = MathF.Abs(position.X - size.X / 2 - mouseWorld.X) * marginScale;
 			bool inXRange = mouseWorld.X > position.X - size.X / 2 && mouseWorld.X < position.X + size.X / 2;
 			bool inYRange = mouseWorld.Y > position.Y - size.Y / 2 && mouseWorld.Y < position.Y + size.Y / 2;
 
@@ -146,7 +146,7 @@ namespace Editor.Objects
 				_ => Color.Red
 			};
 
-			return ExternalActions.IsHitboxModeActive() ? color : color.MultiplyAlpha(0.2f);
+			return color;
 		}
 
 		public List<KeyframeableValue> EnumerateKeyframeableValues() => [Position, Size];

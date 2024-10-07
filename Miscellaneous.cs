@@ -2,8 +2,11 @@
 
 using Microsoft.Xna.Framework;
 
+using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Editor.Objects
 {
@@ -69,6 +72,18 @@ namespace Editor.Objects
 	}
 	public static class MiscellaneousFunctions
 	{
+		public static void GetQuadsPrimitive(float x, float y, float pivotX, float pivotY, float w, float h, float sin, float cos, out float tlX, out float tlY, out float trX, out float trY, out float blX, out float blY, out float brX, out float brY)
+		{
+			tlX = x + pivotX * cos - pivotY * sin;
+			tlY = y + pivotX * sin + pivotY * cos;
+			trX = x + (pivotX + w) * cos - pivotY * sin;
+			trY = y + (pivotX + w) * sin + pivotY * cos;
+			blX = x + pivotX * cos - (pivotY + h) * sin;
+			blY = y + pivotX * sin + (pivotY + h) * cos;
+			brX = x + (pivotX + w) * cos - (pivotY + h) * sin;
+			brY = y + (pivotX + w) * sin + (pivotY + h) * cos;
+		}
+
 		public static bool IsInsideRectangle(Vector2 position, Vector2 size, float rotation, Vector2 point)
 		{
 			// Translate point to local coordinates of the rectangle
@@ -123,7 +138,7 @@ namespace Editor.Objects
 		{
 			// ew chatgpt again (i am running out of time)
 			(float sin, float cos) = MathF.SinCos(rotation);
-			ExternalActions.CalculateQuadPoints(center.X, center.Y, pivot.X, pivot.Y, size.X, size.Y, sin, cos,
+			GetQuadsPrimitive(center.X, center.Y, pivot.X, pivot.Y, size.X, size.Y, sin, cos,
 				out float tlX, out float tlY,
 				out float trX, out float trY,
 				out float blX, out float blY,
@@ -167,6 +182,123 @@ namespace Editor.Objects
 		public static Vector2 Abs(this Vector2 vector2)
 		{
 			return new Vector2(MathF.Abs(vector2.X), MathF.Abs(vector2.Y));
+		}
+
+		public static void RemoveInvalidLinks(IAnimationObject animationObject)
+		{
+			foreach (KeyframeableValue value in animationObject.EnumerateKeyframeableValues())
+			{
+				for (int index = 0; index < value.links.Count; index++)
+				{
+					KeyframeLink link = value.links[index];
+					link.SanitizeValues();
+					List<int> frames = link.Frames.ToList();
+					frames.RemoveAll(v => !value.HasKeyframeAtFrame(v));
+					link = new KeyframeLink(link.ContainingValue, frames);
+
+					if (link.Count >= 2)
+						continue;
+
+					value.links.RemoveAt(index);
+					index--;
+				}
+			}
+		}
+	}
+	public record JsonData(bool looping, bool playingForward, bool playingBackwards, int selectedFps, int currentKeyframe, TextureFrame[] textures, TextureAnimationObject[] graphicObjects, HitboxAnimationObject[] hitboxObjects)
+	{
+		public static JsonSerializerOptions DefaultSerializerOptions => new JsonSerializerOptions // returns an new instance everytime because caching is brROKEN  I LOST 6 ENTIRE PROJECTS
+		{
+			PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+			AllowTrailingCommas = true,
+			IncludeFields = true,
+			WriteIndented = true,
+			ReferenceHandler = ReferenceHandler.Preserve,
+			IgnoreReadOnlyFields = true,
+			IgnoreReadOnlyProperties = true,
+			ReadCommentHandling = JsonCommentHandling.Skip,
+			DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+			Converters =
+			{
+				new JsonStringEnumConverter<HitboxType>(JsonNamingPolicy.SnakeCaseLower),
+				new JsonStringEnumConverter<HitboxConditions>(JsonNamingPolicy.SnakeCaseLower),
+				new JsonStringEnumConverter<LaunchType>(JsonNamingPolicy.SnakeCaseLower),
+				new JsonStringEnumConverter<InterpolationType>(JsonNamingPolicy.SnakeCaseLower),
+			}
+		};
+
+		[JsonConstructor]
+		public JsonData() : this(false, false, false, 0, 0, Array.Empty<TextureFrame>(), Array.Empty<TextureAnimationObject>(), Array.Empty<HitboxAnimationObject>())
+		{
+		}
+
+		public void Fixup()
+		{
+			foreach (TextureAnimationObject graphicObject in graphicObjects)
+			{
+				foreach (KeyframeableValue keyframeableValue in graphicObject.EnumerateKeyframeableValues())
+				{
+					FixKeyframeableValue(keyframeableValue);
+				}
+			}
+
+			foreach (HitboxAnimationObject hitboxObject in hitboxObjects)
+			{
+				foreach (KeyframeableValue keyframeableValue in hitboxObject.EnumerateKeyframeableValues())
+				{
+					FixKeyframeableValue(keyframeableValue);
+				}
+			}
+		}
+
+		private static void FixKeyframeableValue(KeyframeableValue keyframeableValue)
+		{
+			ResolveKeyframeValue(ref keyframeableValue.DefaultValue, keyframeableValue);
+
+			foreach (Keyframe keyframe in keyframeableValue.keyframes)
+			{
+				keyframe.Value = ResolveKeyframeValue(keyframe.Value, keyframeableValue);
+			}
+
+			foreach (KeyframeLink link in keyframeableValue.links)
+			{
+				link.SanitizeValues();
+			}
+		}
+
+		public static void ResolveKeyframeValue(ref object value, KeyframeableValue containingValue)
+		{
+			value = ResolveKeyframeValue(value, containingValue);
+		}
+
+		public static object ResolveKeyframeValue(object value, KeyframeableValue containingValue)
+		{
+			if (value is int intValue && containingValue is FloatKeyframeValue)
+			{
+				return (float)intValue;
+			}
+
+			return value;
+		}
+
+		public static JsonData LoadFromPath(string filePath)
+		{
+			byte[] text = File.ReadAllBytes(filePath);
+
+			if (BitConverter.ToUInt16(text, 0) == 0x9DD5) // file is compressed
+			{
+				using (MemoryStream stream = new MemoryStream(text))
+				using (DeflateStream deflateStream = new DeflateStream(stream, CompressionMode.Decompress))
+				{
+					using (MemoryStream outputStream = new MemoryStream())
+					{
+						deflateStream.CopyTo(outputStream);
+						text = outputStream.GetBuffer();
+					}
+				}
+			}
+
+			return JsonSerializer.Deserialize<JsonData>(text, DefaultSerializerOptions);
 		}
 	}
 	public static class PropertyNames
