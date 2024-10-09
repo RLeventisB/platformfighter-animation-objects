@@ -47,7 +47,7 @@ namespace Editor.Objects
 		}
 
 		[JsonIgnore]
-		public nint TextureId { get; private set; }
+		public nint? TextureId { get; private set; }
 		
 		public bool IsBeingHovered(Vector2 mouseWorld, int? frame) => false;
 
@@ -55,8 +55,15 @@ namespace Editor.Objects
 
 		public void Dispose()
 		{
-			ExternalActions.UnbindTexture(TextureId);
-			GC.SuppressFinalize(this);
+			Dispose(true);
+		}
+		public void Dispose(bool unbind)
+		{
+			if (TextureId.HasValue && unbind)
+			{
+				ExternalActions.UnbindTexture(TextureId.Value);
+				GC.SuppressFinalize(this);
+			}
 		}
 	}
 }
