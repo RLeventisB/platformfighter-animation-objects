@@ -33,7 +33,6 @@ namespace Editor.Objects
 			FrameSize = frameSize ?? new Point(1);
 			FramePosition = framePosition ?? Point.Zero;
 			Pivot = pivot ?? new NVector2(1 / 2f);
-			TextureId = ExternalActions.BindTexturePath(path);
 		}
 
 		public TextureFrame(string name, Texture2D texture, Point frameSize, Point? framePosition = null, NVector2? pivot = null)
@@ -43,11 +42,16 @@ namespace Editor.Objects
 			FrameSize = frameSize;
 			FramePosition = framePosition ?? Point.Zero;
 			Pivot = pivot ?? NVector2.Zero;
-			TextureId = ExternalActions.BindTexture(texture);
 		}
 
 		[JsonIgnore]
-		public nint? TextureId { get; private set; }
+		public nint? _textureId;
+		public nint TextureId
+		{
+			get => _textureId.Value;
+			set => _textureId = value;
+		}
+		public bool IsBinded => _textureId.HasValue;
 		
 		public bool IsBeingHovered(Vector2 mouseWorld, int? frame) => false;
 
@@ -59,9 +63,9 @@ namespace Editor.Objects
 		}
 		public void Dispose(bool unbind)
 		{
-			if (TextureId.HasValue && unbind)
+			if (IsBinded && unbind)
 			{
-				ExternalActions.UnbindTexture(TextureId.Value);
+				ExternalActions.UnbindTexture(TextureId);
 				GC.SuppressFinalize(this);
 			}
 		}
