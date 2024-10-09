@@ -94,14 +94,14 @@ namespace Editor.Objects
 
 		public int Interpolate(int frame)
 		{
-			Interpolate(this, frame, FloatInterpolator, out object value2);
+			Interpolate(this, frame, IntegerInterpolator, out object value2);
 
 			return (int)value2;
 		}
 
 		public bool TryInterpolate(int frame, out int value)
 		{
-			bool success = Interpolate(this, frame, FloatInterpolator, out object value2);
+			bool success = Interpolate(this, frame, IntegerInterpolator, out object value2);
 			value = (int)value2;
 
 			return success;
