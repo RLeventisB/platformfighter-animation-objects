@@ -41,10 +41,12 @@ namespace Editor.Objects
 			Priority = 0; // the priority of a hitbox, takes effect when multiple hitboxes collide with the victim at the same time, same priority hitboxes are selected randomly
 			Rate = 0.98f;
 			LaunchPoint = NVector2.Zero;
+			MovementInfluence = 0.2f;
 		}
 
 		public ushort Hitstun, MaxHitstun, ShieldStun, DuelGameLag, AttackId, ImmunityAfterHit, Priority, FrameDuration, SpawnFrame;
-		public float Damage, HitstunGrowth, LaunchAngle, LaunchPotency, LaunchPotencyGrowth, LaunchPotencyMax, ShieldLaunchAngle, ShieldPotency, Rate;
+		public float Damage, HitstunGrowth, LaunchAngle, LaunchPotency, LaunchPotencyGrowth, LaunchPotencyMax, ShieldLaunchAngle, ShieldPotency, Rate, MovementInfluence;
+		[JsonConverter(typeof(Keyframe.KeyframeValueJsonConverter))]
 		public NVector2 LaunchPoint;
 		public Vector2KeyframeValue Size { get; set; }
 		public Vector2KeyframeValue Position { get; set; }
@@ -92,6 +94,7 @@ namespace Editor.Objects
 			LaunchType = clone.LaunchType;
 			Conditions = clone.Conditions;
 			LaunchPoint = clone.LaunchPoint;
+			MovementInfluence = clone.MovementInfluence;
 		}
 
 		public int EndFrame => SpawnFrame + FrameDuration;
