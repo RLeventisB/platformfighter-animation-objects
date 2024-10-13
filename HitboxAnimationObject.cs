@@ -40,10 +40,12 @@ namespace Editor.Objects
 			ShieldPotency = 2; // the force that the hitbox launches when hitting a shielding opponent
 			Priority = 0; // the priority of a hitbox, takes effect when multiple hitboxes collide with the victim at the same time, same priority hitboxes are selected randomly
 			Rate = 0.98f;
+			LaunchPoint = NVector2.Zero;
 		}
 
 		public ushort Hitstun, MaxHitstun, ShieldStun, DuelGameLag, AttackId, ImmunityAfterHit, Priority, FrameDuration, SpawnFrame;
 		public float Damage, HitstunGrowth, LaunchAngle, LaunchPotency, LaunchPotencyGrowth, LaunchPotencyMax, ShieldLaunchAngle, ShieldPotency, Rate;
+		public NVector2 LaunchPoint;
 		public Vector2KeyframeValue Size { get; set; }
 		public Vector2KeyframeValue Position { get; set; }
 		public string Name { get; set; }
@@ -89,6 +91,7 @@ namespace Editor.Objects
 			Type = clone.Type;
 			LaunchType = clone.LaunchType;
 			Conditions = clone.Conditions;
+			LaunchPoint = clone.LaunchPoint;
 		}
 
 		public int EndFrame => SpawnFrame + FrameDuration;

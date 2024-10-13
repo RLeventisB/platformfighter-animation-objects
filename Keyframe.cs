@@ -171,13 +171,12 @@ namespace Editor.Objects
 			InterpolationType = InterpolationType.Lineal;
 		}
 
-		private void AddRange(IEnumerable<Keyframe> keyframes)
+		public void AddRange(IEnumerable<Keyframe> keyframes)
 		{
-			_keyframes.AddRange(keyframes.Where(HaveSameContainingValue).Select(v => v.Frame));
-			_keyframes.Sort();
+			AddRange(keyframes.Where(HaveSameContainingValue).Select(v => v.Frame));
 		}
 
-		private void AddRange(IEnumerable<int> frames)
+		public void AddRange(IEnumerable<int> frames)
 		{
 			_keyframes.AddRange(frames);
 			_keyframes.Sort();
