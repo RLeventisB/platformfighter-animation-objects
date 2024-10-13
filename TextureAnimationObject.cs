@@ -39,7 +39,6 @@ namespace Editor.Objects
 		public Vector2KeyframeValue Scale { get; set; }
 		public IntKeyframeValue FrameIndex { get; set; }
 		public FloatKeyframeValue Rotation { get; set; }
-		[JsonInclude]
 		public string Name { get; set; }
 		public Vector2KeyframeValue Position { get; set; }
 		public FloatKeyframeValue Transparency { get; set; }

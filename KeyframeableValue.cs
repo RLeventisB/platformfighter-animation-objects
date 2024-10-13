@@ -131,8 +131,9 @@ namespace Editor.Objects
 			(fraction, first, second) => first + (second - first) * fraction,
 			(fraction, values) => InterpolateFunctions.InterpolateCatmullRom(values, fraction * (values.Length - 1)));
 
-		[JsonConverter(typeof(Keyframe.KeyframeValueJsonConverter))]
-		public object DefaultValue;
+		[JsonIgnore]
+		[JsonObjectCreationHandling(JsonObjectCreationHandling.Populate)]
+		public object DefaultValue { get; set; }
 
 		public KeyframeList keyframes;
 		public List<KeyframeLink> links;

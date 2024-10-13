@@ -234,29 +234,42 @@ namespace Editor.Objects
 
 		public void Fixup()
 		{
+			TextureAnimationObject textureModel = new TextureAnimationObject();
 			foreach (TextureAnimationObject graphicObject in graphicObjects)
 			{
-				foreach (KeyframeableValue keyframeableValue in graphicObject.EnumerateKeyframeableValues())
+				List<KeyframeableValue> list = graphicObject.EnumerateKeyframeableValues();
+				List<KeyframeableValue> modelValues = textureModel.EnumerateKeyframeableValues();
+
+				for (int i = 0; i < list.Count; i++)
 				{
-					FixKeyframeableValue(keyframeableValue);
+					FixKeyframeableValue(list[i], modelValues[i]);
 				}
 			}
 
+			HitboxAnimationObject hitboxModel = new HitboxAnimationObject();
 			foreach (HitboxAnimationObject hitboxObject in hitboxObjects)
 			{
-				foreach (KeyframeableValue keyframeableValue in hitboxObject.EnumerateKeyframeableValues())
+				List<KeyframeableValue> list = hitboxObject.EnumerateKeyframeableValues();
+				List<KeyframeableValue> modelValues = hitboxModel.EnumerateKeyframeableValues();
+
+				for (int i = 0; i < list.Count; i++)
 				{
-					FixKeyframeableValue(keyframeableValue);
+					FixKeyframeableValue(list[i], modelValues[i]);
 				}
 			}
 		}
 
-		private static void FixKeyframeableValue(KeyframeableValue keyframeableValue)
+		private static void FixKeyframeableValue(KeyframeableValue keyframeableValue, KeyframeableValue modelValue)
 		{
-			ResolveKeyframeValue(ref keyframeableValue.DefaultValue, keyframeableValue);
+			keyframeableValue.DefaultValue = modelValue.DefaultValue; // dumb fuck is set as null even if it's ignored
 
-			foreach (Keyframe keyframe in keyframeableValue.keyframes)
+			for (int i = 0; i < keyframeableValue.keyframes.Count; i++)
 			{
+				Keyframe keyframe = keyframeableValue.keyframes[i];
+				
+				if (keyframe.Value is null)
+					keyframeableValue.RemoveAt(i);
+				
 				keyframe.Value = ResolveKeyframeValue(keyframe.Value, keyframeableValue);
 			}
 
