@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 namespace Editor.Objects
 {
 	[DebuggerDisplay("{Name}")]
-	public class TextureFrame : IAnimationObject, IDisposable
+	public class TextureFrame : IAnimationObject
 	{
 		public string Path { get; set; }
 		public string Name { get; set; }
@@ -45,7 +45,8 @@ namespace Editor.Objects
 		}
 
 		[JsonIgnore]
-		public nint? _textureId;
+		private nint? _textureId;
+		[JsonIgnore]
 		public nint TextureId
 		{
 			get => _textureId.Value;
@@ -56,18 +57,5 @@ namespace Editor.Objects
 		public bool IsBeingHovered(Vector2 mouseWorld, int? frame) => false;
 
 		public List<KeyframeableValue> EnumerateKeyframeableValues() => [];
-
-		public void Dispose()
-		{
-			Dispose(true);
-		}
-		public void Dispose(bool unbind)
-		{
-			if (IsBinded && unbind)
-			{
-				ExternalActions.UnbindTexture(TextureId);
-				GC.SuppressFinalize(this);
-			}
-		}
 	}
 }
