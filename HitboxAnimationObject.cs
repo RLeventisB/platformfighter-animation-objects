@@ -47,7 +47,7 @@ namespace Editor.Objects
 		public ushort Hitstun, MaxHitstun, ShieldStun, DuelGameLag, AttackId, ImmunityAfterHit, Priority, FrameDuration, SpawnFrame;
 		public float Damage, HitstunGrowth, LaunchAngle, LaunchPotency, LaunchPotencyGrowth, LaunchPotencyMax, ShieldLaunchAngle, ShieldPotency, Rate, MovementInfluence;
 		[JsonConverter(typeof(Keyframe.KeyframeValueJsonConverter))]
-		public NVector2 LaunchPoint;
+		public Vector2 LaunchPoint;
 		public Vector2KeyframeValue Size { get; set; }
 		public Vector2KeyframeValue Position { get; set; }
 		public string Name { get; set; }
