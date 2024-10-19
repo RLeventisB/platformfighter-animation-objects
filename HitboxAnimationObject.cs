@@ -40,7 +40,7 @@ namespace Editor.Objects
 			ShieldPotency = 2; // the force that the hitbox launches when hitting a shielding opponent
 			Priority = 0; // the priority of a hitbox, takes effect when multiple hitboxes collide with the victim at the same time, same priority hitboxes are selected randomly
 			Rate = 0.98f;
-			LaunchPoint = NVector2.Zero;
+			LaunchPoint = Vector2.Zero;
 			MovementInfluence = 0.2f;
 		}
 

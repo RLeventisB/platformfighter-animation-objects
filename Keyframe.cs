@@ -14,7 +14,7 @@ namespace Editor.Objects
 		public KeyframeableValue ContainingValue;
 		[JsonInclude]
 		[JsonConverter(typeof(KeyframeValueJsonConverter))]
-		private object value;
+		internal object value;
 
 		[JsonConstructor]
 		public Keyframe()
@@ -44,6 +44,10 @@ namespace Editor.Objects
 
 		public int CompareTo(Keyframe other) => Frame.CompareTo(other.Frame);
 
+		public void SetValueWithoutUpdate(object value)
+		{
+			this.value = value;
+		}
 		public static Keyframe CreateDummyKeyframe(int frame)
 		{
 			return new Keyframe(null, frame, default);

@@ -270,7 +270,7 @@ namespace Editor.Objects
 				if (keyframe.Value is null)
 					keyframeableValue.RemoveAt(i);
 				
-				keyframe.Value = ResolveKeyframeValue(keyframe.Value, keyframeableValue);
+				keyframe.value = ResolveKeyframeValue(keyframe.Value, keyframeableValue);
 			}
 
 			foreach (KeyframeLink link in keyframeableValue.links)
