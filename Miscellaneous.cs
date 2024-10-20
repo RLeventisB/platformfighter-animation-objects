@@ -11,6 +11,50 @@ using System.Text.Json.Serialization.Metadata;
 
 namespace Editor.Objects
 {
+			public class XnaVector2JsonConverter : JsonConverter<Vector2>
+		{
+			public override bool CanConvert(Type typeToConvert) => typeToConvert == typeof(Vector2);
+
+			public override Vector2 Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+			{
+				switch (reader.TokenType)
+				{
+					case JsonTokenType.StartObject: // is a vector2
+						reader.Read();
+
+						if (reader.TokenType != JsonTokenType.PropertyName) // x
+							throw new JsonException();
+
+						reader.Read();
+						float x = reader.GetSingle();
+
+						reader.Read();
+
+						if (reader.TokenType != JsonTokenType.PropertyName) // y
+							throw new JsonException();
+
+						reader.Read();
+						float y = reader.GetSingle();
+
+						reader.Read();
+
+						if (reader.TokenType != JsonTokenType.EndObject) // y
+							throw new JsonException();
+
+						return new Vector2(x, y);
+				}
+
+				throw new JsonException();
+			}
+
+			public override void Write(Utf8JsonWriter writer, Vector2 value, JsonSerializerOptions options)
+			{
+					writer.WriteStartObject();
+					writer.WriteNumber("x", value.X);
+					writer.WriteNumber("y", value.Y);
+					writer.WriteEndObject();
+				}
+		}
 	public static class InterpolateFunctions
 	{
 		public static int InterpolateCatmullRom(int[] values, float progress)
