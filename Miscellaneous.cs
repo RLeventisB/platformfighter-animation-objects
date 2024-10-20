@@ -316,11 +316,10 @@ namespace Editor.Objects
 			return JsonSerializer.Deserialize<JsonData>(text, DefaultSerializerOptions);
 		}
 	}
-	public class ProjectTypeInfoResolver : IJsonTypeInfoResolver
+	[JsonSourceGenerationOptions(WriteIndented = true)]
+	[JsonSerializable(typeof(JsonData), GenerationMode = JsonSourceGenerationMode.Metadata)]
+	public partial class ProjectTypeInfoResolver : JsonSerializerContext
 	{
-		public JsonTypeInfo GetTypeInfo(Type type, JsonSerializerOptions options)
-		{
-		}
 	}
 	public static class PropertyNames
 	{

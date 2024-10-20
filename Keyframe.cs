@@ -145,7 +145,7 @@ namespace Editor.Objects
 	{
 		[JsonPropertyName("keyframes")]
 		[JsonInclude]
-		private List<int> _keyframes;
+		internal List<int> _keyframes;
 		[JsonIgnore]
 		public ReadOnlyCollection<int> Frames => _keyframes.AsReadOnly();
 		public KeyframeableValue ContainingValue;
