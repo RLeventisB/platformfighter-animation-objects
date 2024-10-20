@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Editor.Objects
 {
@@ -218,6 +219,7 @@ namespace Editor.Objects
 			IgnoreReadOnlyProperties = true,
 			ReadCommentHandling = JsonCommentHandling.Skip,
 			DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+			TypeInfoResolver = new ProjectTypeInfoResolver(),
 			Converters =
 			{
 				new JsonStringEnumConverter<HitboxType>(JsonNamingPolicy.SnakeCaseLower),
@@ -312,6 +314,12 @@ namespace Editor.Objects
 			}
 
 			return JsonSerializer.Deserialize<JsonData>(text, DefaultSerializerOptions);
+		}
+	}
+	public class ProjectTypeInfoResolver : IJsonTypeInfoResolver
+	{
+		public JsonTypeInfo GetTypeInfo(Type type, JsonSerializerOptions options)
+		{
 		}
 	}
 	public static class PropertyNames

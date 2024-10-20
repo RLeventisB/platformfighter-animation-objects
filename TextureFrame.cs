@@ -12,7 +12,7 @@ namespace Editor.Objects
 		public string Path { get; set; }
 		public string Name { get; set; }
 
-		public NVector2 Pivot { get; set; }
+		public Vector2 Pivot { get; set; }
 		public Point FrameSize { get; set; }
 		public Point FramePosition { get; set; }
 
@@ -23,25 +23,25 @@ namespace Editor.Objects
 			Path = null;
 			FrameSize = Point.Zero;
 			FramePosition = Point.Zero;
-			Pivot = NVector2.One;
+			Pivot = Vector2.One;
 		}
 
-		public TextureFrame(string name, string path, Point? frameSize = null, Point? framePosition = null, NVector2? pivot = null)
+		public TextureFrame(string name, string path, Point? frameSize = null, Point? framePosition = null, Vector2? pivot = null)
 		{
 			Name = name;
 			Path = path;
 			FrameSize = frameSize ?? new Point(1);
 			FramePosition = framePosition ?? Point.Zero;
-			Pivot = pivot ?? new NVector2(1 / 2f);
+			Pivot = pivot ?? new Vector2(1 / 2f);
 		}
 
-		public TextureFrame(string name, Texture2D texture, Point frameSize, Point? framePosition = null, NVector2? pivot = null)
+		public TextureFrame(string name, Texture2D texture, Point? frameSize = null, Point? framePosition = null, Vector2? pivot = null)
 		{
 			Name = name;
-			Path = "Syntetic";
-			FrameSize = frameSize;
+			Path = "Syntetic " + (string.IsNullOrEmpty(texture.Name) ? string.Empty : texture.Name);
+			FrameSize = frameSize ?? new Point(1);
 			FramePosition = framePosition ?? Point.Zero;
-			Pivot = pivot ?? NVector2.Zero;
+			Pivot = pivot ?? new Vector2(1 / 2f);
 		}
 
 		[JsonIgnore]
